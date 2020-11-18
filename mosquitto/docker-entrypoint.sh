@@ -2,13 +2,19 @@
 
 set -e
 
-if [ ! -f "${MOSQUITTO_PASSWORDFILE}" ]
+#bro (bridge mqtt->influxdb) user.
+mosquitto_passwd -b /mosquitto/config/mosquitto.passwd bro AC5sNQh5aJRc
+
+if [ ! -f addusers ]
 then
-  echo "$0: File '${MOSQUITTO_PASSWORDFILE}' not found."
+  echo "$0: File for extra users not found."
   exit 1
 fi
 
 # Convert the password file.
-mosquitto_passwd -U $MOSQUITTO_PASSWORDFILE
+mosquitto_passwd -U /addusers
+cat /addusers >> /mosquitto/config/mosquitto.passwd
+
+
 
 exec "$@"
