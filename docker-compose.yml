@@ -1,0 +1,57 @@
+version: "3.8"
+services:
+  mosquitto:
+    build: ./mosquitto
+    environment:
+      - MOSQUITTO_PASSWORDFILE=passwordfile
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+      - "1884:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/mosquitto.passwd:/mosquitto/config/mosquitto.passwd:rw
+    restart: unless-stopped
+
+  influx:
+    image: influxdb
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=mdn_db
+      - INFLUXDB_USER=bro
+      - INFLUXDB_PASSWORD=sssSDFqQqwe
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=Ch4ng35
+
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    network_mode: "host"
+    volumes:
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+    depends_on:
+      - "influx"
+    restart: unless-stopped
+
+  mqttbridge:
+    build: ./bro
+    image: 1mek/mqttinfluxdb-bro
+    environment:
+      - BRO_DB_URL=influx
+      - BRO_DB_USER=bro
+      - BRO_DB_PASS=sssSDFqQqwe
+      - BRO_DB_NAME=mdn_db
+      - BRO_MQTT_URL=mosquitto
+      - BRO_MQTT_USER=bro
+      - BRO_MQTT_PASS=AC5sNQh5aJRc
+      - BRO_TOPIC=i/+/+
+      - BRO_MULTI=m
+    container_name: mqttbron
+    restart: unless-stopped
